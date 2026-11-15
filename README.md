@@ -63,5 +63,9 @@ curl -fsSL https://ollama.com/install.sh | sh   # Ollama: rerun the installer
 
 ## Troubleshooting
 
-- **No models in the dropdown:** run `curl http://127.0.0.1:11434/api/tags` on the host. It should list your models. Also check the connection URL under Admin Settings → Connections.
-- **Logs:** `docker logs -f open-webui` and `journalctl -u ollama -f`.
+- **No models in the dropdown:** run `./diagnose.sh`, then check these in order:
+  1. **The saved connection URL wins.** Open WebUI reads `OLLAMA_BASE_URL` only on its first start, then keeps the URL in its database. Go to **Admin Settings → Connections**, set the Ollama URL to `http://127.0.0.1:11434`, make sure the connection is switched on, click the verify (refresh) button, and save.
+  2. **Ollama has no models.** If `ollama list` is empty, run `ollama pull qwen2.5:7b`.
+  3. **Docker Desktop** (Mac, Windows, or Docker Desktop on Linux): host networking doesn't reach your real machine there. Delete the `network_mode`, `HOST` and `PORT` lines from `docker-compose.yml`, add `ports: ["127.0.0.1:3000:8080"]`, and set `OLLAMA_BASE_URL: http://host.docker.internal:11434`.
+  4. **Only regular users see nothing:** if the admin can see models, open **Admin Settings → Models** and make the models public, or give the users' group access.
+- **Logs:** run `docker logs -f open-webui` and `journalctl -u ollama -f`.
