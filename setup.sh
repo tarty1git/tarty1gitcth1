@@ -64,9 +64,9 @@ log "Pulling the Open WebUI image (about 2-5 GB, can take a few minutes)"
 docker compose pull -q
 
 # A container created by the plain 'docker run' command blocks the name. Its data is in the volume, so it can go.
-if docker inspect open-webui >/dev/null 2>&1 &&
-   [[ -z $(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' open-webui) ]]; then
-  mounts=$(docker inspect -f '{{range .Mounts}}{{.Name}}:{{.Destination}} {{end}}' open-webui)
+if docker container inspect open-webui >/dev/null 2>&1 &&
+   [[ -z $(docker container inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' open-webui) ]]; then
+  mounts=$(docker container inspect -f '{{range .Mounts}}{{.Name}}:{{.Destination}} {{end}}' open-webui)
   [[ $mounts == *"open-webui:/app/backend/data"* ]] ||
     die "A container named open-webui exists but doesn't keep its data in the 'open-webui' volume ($mounts). Back it up, remove it, and rerun."
   log "Replacing the old 'docker run' container (data in the open-webui volume is kept)"

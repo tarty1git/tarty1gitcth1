@@ -22,12 +22,12 @@ if ! docker info >/dev/null 2>&1; then bad "Docker isn't reachable (run with sud
 else
   os=$(docker info --format '{{.OperatingSystem}}')
   [[ $os == *"Docker Desktop"* ]] && bad "Docker Desktop: host networking won't reach Ollama. See the README's Docker Desktop section."
-  if ! docker inspect open-webui >/dev/null 2>&1; then bad "No open-webui container. Run setup.sh"
+  if ! docker container inspect open-webui >/dev/null 2>&1; then bad "No open-webui container. Run setup.sh"
   else
-    ok "container: $(docker inspect -f '{{.State.Status}}, network {{.HostConfig.NetworkMode}}' open-webui)"
-    [[ -z $(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' open-webui) ]] &&
+    ok "container: $(docker container inspect -f '{{.State.Status}}, network {{.HostConfig.NetworkMode}}' open-webui)"
+    [[ -z $(docker container inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' open-webui) ]] &&
       bad "The container was made with plain 'docker run', not this compose file. Rerun setup.sh to migrate it."
-    env=$(docker inspect open-webui --format '{{range .Config.Env}}{{println .}}{{end}}')
+    env=$(docker container inspect open-webui --format '{{range .Config.Env}}{{println .}}{{end}}')
     grep -q '^BYPASS_MODEL_ACCESS_CONTROL=True' <<<"$env" ||
       printf '  note: non-admin users only see models shared with them (Admin Settings > Models).\n'
     webui_up && ok "Open WebUI is healthy on $WEBUI_URL" || bad "Open WebUI isn't answering on $WEBUI_URL. See: docker logs open-webui"
