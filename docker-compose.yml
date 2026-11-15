@@ -1,10 +1,13 @@
 # Open WebUI in front of an Ollama instance running on the host.
 #
 # Host networking is used on purpose:
-#   - Ollama can stay on its default 127.0.0.1:11434 (never reachable from outside).
-#   - Open WebUI listens only on 127.0.0.1:3000, so it is reachable only through
-#     the reverse proxy (Caddy) or a VPN. Docker-published ports (-p) skip UFW's
-#     rules, so not publishing any port avoids that trap.
+#   - Ollama can stay on its default 127.0.0.1:11434, which is never reachable from outside.
+#   - Open WebUI listens only on 127.0.0.1:3000, so people reach it only through
+#     the reverse proxy (Caddy) or a VPN. Ports Docker publishes (-p) skip UFW's
+#     rules, so publishing none avoids that trap.
+# Host networking needs plain Docker Engine on Linux. See the README for Docker Desktop.
+name: open-webui
+
 services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
@@ -14,11 +17,24 @@ services:
     environment:
       HOST: 127.0.0.1
       PORT: "3000"
+      # Used only on the very first start. After that, the URL saved in
+      # Admin Settings > Connections wins.
       OLLAMA_BASE_URL: http://127.0.0.1:11434
-      # Uncomment once your team's accounts exist (or flip it in Admin Settings):
-      # ENABLE_SIGNUP: "false"
+      # Every signed-in user sees every model. Without this, Open WebUI shows
+      # models only to admins until you share each one in Admin Settings > Models.
+      BYPASS_MODEL_ACCESS_CONTROL: "True"
+      # Hide the built-in OpenAI connection (it has no key and only logs errors).
+      # First start only; change it later in Admin Settings > Connections.
+      ENABLE_OPENAI_API: "False"
+      # Keep the session-signing key in the data volume. Otherwise every update
+      # creates a new key and logs everyone out.
+      WEBUI_SECRET_KEY_FILE: /app/backend/data/.webui_secret_key
     volumes:
       - open-webui:/app/backend/data
 
 volumes:
   open-webui:
+    # Same volume as the plain `docker run -v open-webui:...` command, so existing
+    # accounts and chats carry over. setup.sh creates it; by hand: docker volume create open-webui
+    name: open-webui
+    external: true
