@@ -1,0 +1,24 @@
+# Open WebUI in front of an Ollama instance running on the host.
+#
+# Host networking is used on purpose:
+#   - Ollama can stay on its default 127.0.0.1:11434 (never reachable from outside).
+#   - Open WebUI listens only on 127.0.0.1:3000, so it is reachable only through
+#     the reverse proxy (Caddy) or a VPN. Docker-published ports (-p) skip UFW's
+#     rules, so not publishing any port avoids that trap.
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: always
+    network_mode: host
+    environment:
+      HOST: 127.0.0.1
+      PORT: "3000"
+      OLLAMA_BASE_URL: http://127.0.0.1:11434
+      # Uncomment once your team's accounts exist (or flip it in Admin Settings):
+      # ENABLE_SIGNUP: "false"
+    volumes:
+      - open-webui:/app/backend/data
+
+volumes:
+  open-webui:
